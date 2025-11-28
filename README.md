@@ -1,6 +1,10 @@
 # GitHub GraphQL Demo with Relay
 
+![GitHub Pull Request Viewer](./example.png)
+
 A Vite + React application that authenticates with GitHub using OAuth and displays your open pull requests using the GitHub GraphQL API with Relay.
+
+
 
 ## Features
 
