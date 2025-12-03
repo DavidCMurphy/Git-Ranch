@@ -4,8 +4,6 @@
 
 A Vite + React application that authenticates with GitHub using OAuth and displays your open pull requests using the GitHub GraphQL API with Relay.
 
-
-
 ## Features
 
 - 🔐 GitHub OAuth authentication
@@ -38,7 +36,7 @@ A Vite + React application that authenticates with GitHub using OAuth and displa
 3. Fill in the details:
    - **Application name**: GraphQL Demo (or any name)
    - **Homepage URL**: `http://localhost:3000`
-   - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
+   - **Authorization callback URL**: `http://localhost:3000/callback`
 4. Click "Register application"
 5. Copy the **Client ID**
 6. Generate a new **Client Secret** and copy it
@@ -46,6 +44,7 @@ A Vite + React application that authenticates with GitHub using OAuth and displa
 ### 2. Configure Environment Variables
 
 1. Copy the example environment file:
+
    ```bash
    cp .env.example .env
    ```
