@@ -1,6 +1,6 @@
 import { graphql, useFragment } from "react-relay";
 import { PullRequest_pr$key } from "./__generated__/PullRequest_pr.graphql";
-import PullRequestReactions from "./PullRequestReactions";
+import ReactableReactions from "./ReactableReactions";
 
 const PullRequest = ({ pr }: { pr: PullRequest_pr$key }) => {
   const data = useFragment(
@@ -23,7 +23,7 @@ const PullRequest = ({ pr }: { pr: PullRequest_pr$key }) => {
         additions
         deletions
         reviewDecision
-        ...PullRequestReactions_reactions
+        ...ReactableReactions_reactable
       }
     `,
     pr
@@ -100,7 +100,7 @@ const PullRequest = ({ pr }: { pr: PullRequest_pr$key }) => {
         </div>
       </div>
 
-      <PullRequestReactions reactions={data} />
+      <ReactableReactions reactable={data} />
 
       <div className="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-500">
         <div className="flex items-center gap-1">

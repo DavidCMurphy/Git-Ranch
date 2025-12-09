@@ -1,4 +1,4 @@
-import { ReactionContent } from "../components/__generated__/PullRequestReactions_reactions.graphql";
+import { ReactionContent } from "../components/__generated__/ReactableReactions_reactions.graphql";
 
 export const REACTION_TYPES: ReactionContent[] = [
   "THUMBS_UP",
@@ -10,6 +10,8 @@ export const REACTION_TYPES: ReactionContent[] = [
   "ROCKET",
   "EYES",
 ];
+
+export type { ReactionContent };
 
 export const getReactionEmoji = (content: ReactionContent): string => {
   switch (content) {
@@ -33,4 +35,3 @@ export const getReactionEmoji = (content: ReactionContent): string => {
       throw new Error(`Unknown reaction content: ${content}`);
   }
 };
-

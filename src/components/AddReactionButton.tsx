@@ -1,21 +1,24 @@
 import { useState } from "react";
 import { graphql, useFragment, useMutation } from "react-relay";
-import { AddReactionButton_subject$key } from "./__generated__/AddReactionButton_subject.graphql";
-import { REACTION_TYPES, getReactionEmoji } from "../lib/reactions";
-import { ReactionContent } from "./__generated__/PullRequestReactions_reactions.graphql";
+import { AddReactionButton_reactable$key } from "./__generated__/AddReactionButton_reactable.graphql";
+import {
+  REACTION_TYPES,
+  getReactionEmoji,
+  ReactionContent,
+} from "../lib/reactions";
 
 type Props = {
-  subject: AddReactionButton_subject$key;
+  reactable: AddReactionButton_reactable$key;
 };
 
-const AddReactionButton = ({ subject }: Props) => {
+const AddReactionButton = ({ reactable }: Props) => {
   const data = useFragment(
     graphql`
-      fragment AddReactionButton_subject on Reactable {
+      fragment AddReactionButton_reactable on Reactable {
         id
       }
     `,
-    subject
+    reactable
   );
 
   const [showPicker, setShowPicker] = useState(false);
@@ -26,7 +29,7 @@ const AddReactionButton = ({ subject }: Props) => {
         reaction {
           content
           reactable {
-            ...PullRequestReactions_reactions
+            ...ReactableReactions_reactable
           }
         }
       }
