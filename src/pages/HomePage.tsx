@@ -1,5 +1,5 @@
-import { initiateGitHubLogin, type GitHubUser } from '../lib/auth';
-import PullRequestList from '../components/PullRequestList';
+import { initiateGitHubLogin, type GitHubUser } from "../lib/auth";
+import PullRequestList from "../components/PullRequestList";
 
 interface HomePageProps {
   user: GitHubUser | null;
@@ -36,9 +36,7 @@ export default function HomePage({ user, onLogout }: HomePageProps) {
             <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
               Welcome, {user.name || user.login}
             </h1>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              {user.email}
-            </p>
+            <p className="text-zinc-600 dark:text-zinc-400">{user.email}</p>
           </div>
           <button
             onClick={onLogout}
@@ -53,4 +51,3 @@ export default function HomePage({ user, onLogout }: HomePageProps) {
     </div>
   );
 }
-
