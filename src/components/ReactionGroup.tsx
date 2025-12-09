@@ -49,20 +49,15 @@ const ReactionGroup = ({ group }: Props) => {
         },
       },
       optimisticUpdater: (store) => {
-        if (!data) return;
-        const { updatableData } = store.readUpdatableFragment(
-          graphql`
-            fragment ReactionGroup_updatable on ReactionGroup @updatable {
-              viewerHasReacted
-              reactors {
-                totalCount
-              }
-            }
-          `,
-          data
+        const subject = store.get(data.subject.id);
+        const groups = subject?.getLinkedRecords("reactionGroups");
+        const group = groups?.find(
+          (g) => g.getValue("content") === data.content
         );
-        updatableData.viewerHasReacted = false;
-        updatableData.reactors.totalCount--;
+        const reactors = group?.getLinkedRecord("reactors");
+        const totalCount = Number(reactors?.getValue("totalCount")) ?? 0;
+        reactors?.setValue(totalCount - 1, "totalCount");
+        group?.setValue(true, "viewerHasReacted");
       },
     });
   };
