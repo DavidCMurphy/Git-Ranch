@@ -4,6 +4,7 @@ import {
   ReactionContent,
 } from "./__generated__/ReactionGroup_group.graphql";
 import { getReactionEmoji } from "../lib/reactions";
+import { ReactionGroup_updatableQuery$key } from "./__generated__/ReactionGroup_updatableQuery.graphql";
 
 type Props = {
   group: ReactionGroup_group$key;
@@ -50,17 +51,26 @@ const ReactionGroup = ({ group }: Props) => {
       },
       optimisticUpdater: (store) => {
         if (!data) return;
-        const { updatableData } = store.readUpdatableFragment(
-          graphql`
-            fragment ReactionGroup_updatable on ReactionGroup @updatable {
-              viewerHasReacted
-              reactors {
-                totalCount
+
+        const { updatableData } =
+          store.readUpdatableQuery<ReactionGroup_updatableQuery$key>(
+            graphql`
+              query ReactionGroup_updatableQuery($subjectId: ID!) @updatable {
+                node(id: $subjectId) {
+                  ... on Reactable {
+                    reactionGroups {
+                      viewerHasReacted
+                      reactors {
+                        totalCount
+                      }
+                    }
+                  }
+                }
               }
-            }
-          `,
-          data
-        );
+            `,
+            { subjectId: data.subject.id }
+          );
+
         updatableData.viewerHasReacted = false;
         updatableData.reactors.totalCount--;
       },
