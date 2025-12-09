@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { AddReactionButton_reactable$key } from "./__generated__/AddReactionButton_reactable.graphql";
+import { AddReactionButton_updatable$key } from "./__generated__/AddReactionButton_updatable.graphql";
 import {
   REACTION_TYPES,
   getReactionEmoji,
@@ -54,18 +55,19 @@ const AddReactionButton = ({ reactable }: Props) => {
         );
         if (!reactionGroup) return;
 
-        const { updatableData } = store.readUpdatableFragment(
-          graphql`
-            fragment AddReactionButton_updatable on ReactionGroup @updatable {
-              content
-              viewerHasReacted
-              reactors {
-                totalCount
+        const { updatableData } =
+          store.readUpdatableFragment<AddReactionButton_updatable$key>(
+            graphql`
+              fragment AddReactionButton_updatable on ReactionGroup @updatable {
+                content
+                viewerHasReacted
+                reactors {
+                  totalCount
+                }
               }
-            }
-          `,
-          reactionGroup
-        );
+            `,
+            reactionGroup
+          );
 
         updatableData.viewerHasReacted = true;
         updatableData.reactors.totalCount++;

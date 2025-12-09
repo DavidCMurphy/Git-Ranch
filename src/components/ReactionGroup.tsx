@@ -13,7 +13,7 @@ const ReactionGroup = ({ group }: Props) => {
   const data = useFragment(
     graphql`
       fragment ReactionGroup_group on ReactionGroup {
-        ...ReactionGroup_updatable
+        # ...ReactionGroup_updatable
         content
         viewerHasReacted
         reactors {
