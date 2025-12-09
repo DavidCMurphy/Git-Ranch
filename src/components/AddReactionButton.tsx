@@ -16,6 +16,10 @@ const AddReactionButton = ({ reactable }: Props) => {
     graphql`
       fragment AddReactionButton_reactable on Reactable {
         id
+        reactionGroups {
+          content
+          ...AddReactionButton_updatable
+        }
       }
     `,
     reactable
@@ -43,6 +47,28 @@ const AddReactionButton = ({ reactable }: Props) => {
           subjectId: data.id,
           content: content,
         },
+      },
+      optimisticUpdater: (store) => {
+        const reactionGroup = data.reactionGroups?.find(
+          (group) => group?.content === content
+        );
+        if (!reactionGroup) return;
+
+        const { updatableData } = store.readUpdatableFragment(
+          graphql`
+            fragment AddReactionButton_updatable on ReactionGroup @updatable {
+              content
+              viewerHasReacted
+              reactors {
+                totalCount
+              }
+            }
+          `,
+          reactionGroup
+        );
+
+        updatableData.viewerHasReacted = true;
+        updatableData.reactors.totalCount++;
       },
       onCompleted: () => setShowPicker(false),
     });
