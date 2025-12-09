@@ -1,8 +1,20 @@
+import { useState } from "react";
 import { graphql, useFragment, useMutation } from "react-relay";
 import {
   PullRequestReactions_reactions$key,
   ReactionContent,
 } from "./__generated__/PullRequestReactions_reactions.graphql";
+
+const REACTION_TYPES: ReactionContent[] = [
+  "THUMBS_UP",
+  "THUMBS_DOWN",
+  "LAUGH",
+  "HOORAY",
+  "CONFUSED",
+  "HEART",
+  "ROCKET",
+  "EYES",
+];
 
 const getReactionEmoji = (content: ReactionContent): string => {
   switch (content) {
@@ -48,7 +60,9 @@ const PullRequestReactions = ({ reactions }: Props) => {
     reactions
   );
 
-  const [commit, isInFlight] = useMutation(graphql`
+  const [showPicker, setShowPicker] = useState(false);
+
+  const [commitRemove, isRemoveInFlight] = useMutation(graphql`
     mutation PullRequestReactionsRemoveReactionMutation(
       $input: RemoveReactionInput!
     ) {
@@ -63,8 +77,23 @@ const PullRequestReactions = ({ reactions }: Props) => {
     }
   `);
 
+  const [commitAdd, isAddInFlight] = useMutation(graphql`
+    mutation PullRequestReactionsAddReactionMutation(
+      $input: AddReactionInput!
+    ) {
+      addReaction(input: $input) {
+        reaction {
+          content
+          reactable {
+            ...PullRequestReactions_reactions
+          }
+        }
+      }
+    }
+  `);
+
   const handleRemoveReaction = (content: ReactionContent) => {
-    commit({
+    commitRemove({
       variables: {
         input: {
           subjectId: data.id,
@@ -74,7 +103,19 @@ const PullRequestReactions = ({ reactions }: Props) => {
     });
   };
 
-  if (!data.reactionGroups || data.reactionGroups.length === 0) {
+  const handleAddReaction = (content: ReactionContent) => {
+    commitAdd({
+      variables: {
+        input: {
+          subjectId: data.id,
+          content: content,
+        },
+      },
+      onCompleted: () => setShowPicker(false),
+    });
+  };
+
+  if (!data.reactionGroups) {
     return null;
   }
 
@@ -82,23 +123,19 @@ const PullRequestReactions = ({ reactions }: Props) => {
     (group) => group.reactors.totalCount > 0
   );
 
-  if (activeReactions.length === 0) {
-    return null;
-  }
-
   return (
-    <div className="flex gap-2 mb-3">
+    <div className="flex gap-2 mb-3 items-center relative">
       {activeReactions.map((group) => (
         <button
           key={group.content}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (group.viewerHasReacted && !isInFlight) {
+            if (group.viewerHasReacted && !isRemoveInFlight) {
               handleRemoveReaction(group.content);
             }
           }}
-          disabled={!group.viewerHasReacted || isInFlight}
+          disabled={!group.viewerHasReacted || isRemoveInFlight}
           className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs border rounded-full transition-colors ${
             group.viewerHasReacted
               ? "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer"
@@ -109,6 +146,38 @@ const PullRequestReactions = ({ reactions }: Props) => {
           <span>{group.reactors.totalCount}</span>
         </button>
       ))}
+
+      <div className="relative">
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setShowPicker(!showPicker);
+          }}
+          className="inline-flex items-center justify-center w-6 h-6 text-xs border border-zinc-200 dark:border-zinc-700 rounded-full bg-zinc-50 dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+        >
+          +
+        </button>
+
+        {showPicker && (
+          <div className="absolute top-full left-0 mt-1 p-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg flex gap-1 z-10">
+            {REACTION_TYPES.map((type) => (
+              <button
+                key={type}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleAddReaction(type);
+                }}
+                disabled={isAddInFlight}
+                className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+              >
+                {getReactionEmoji(type)}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
