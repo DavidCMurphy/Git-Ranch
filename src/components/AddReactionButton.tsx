@@ -19,6 +19,7 @@ const AddReactionButton = ({ reactable }: Props) => {
         id
         reactionGroups {
           content
+          viewerHasReacted
           ...AddReactionButton_updatable
         }
       }
@@ -42,6 +43,14 @@ const AddReactionButton = ({ reactable }: Props) => {
   `);
 
   const handleAddReaction = (content: ReactionContent) => {
+    const reactionGroup = data.reactionGroups?.find(
+      (group) => group?.content === content
+    );
+
+    if (reactionGroup?.viewerHasReacted) {
+      return;
+    }
+
     commitAdd({
       variables: {
         input: {
@@ -53,7 +62,10 @@ const AddReactionButton = ({ reactable }: Props) => {
         const reactionGroup = data.reactionGroups?.find(
           (group) => group?.content === content
         );
-        if (!reactionGroup) return;
+        if (!reactionGroup || reactionGroup?.viewerHasReacted) {
+          setShowPicker(false);
+          return;
+        }
 
         const { updatableData } =
           store.readUpdatableFragment<AddReactionButton_updatable$key>(
