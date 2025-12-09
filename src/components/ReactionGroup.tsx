@@ -63,6 +63,7 @@ const ReactionGroup = ({ group }: Props) => {
         );
         updatableData.viewerHasReacted = false;
         updatableData.reactors.totalCount--;
+      },
     });
   };
 
