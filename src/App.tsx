@@ -1,11 +1,14 @@
-import { useState, useEffect, Suspense } from 'react';
-import { RelayEnvironmentProvider } from 'react-relay';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { getRelayEnvironment, resetRelayEnvironment } from './lib/relay/environment';
-import { loadAuthState, clearAuthState, type AuthState } from './lib/auth';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import HomePage from './pages/HomePage';
-import CallbackPage from './pages/CallbackPage';
+import { useState, useEffect, Suspense } from "react";
+import { RelayEnvironmentProvider } from "react-relay";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  getRelayEnvironment,
+  resetRelayEnvironment,
+} from "./lib/relay/environment";
+import { loadAuthState, clearAuthState, type AuthState } from "./lib/auth";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import HomePage from "./pages/HomePage";
+import CallbackPage from "./pages/CallbackPage";
 
 function App() {
   const [authState, setAuthState] = useState<AuthState>(loadAuthState());
@@ -45,14 +48,11 @@ function App() {
                       </div>
                     }
                   >
-                    <HomePage
-                      user={authState.user}
-                      onLogout={handleLogout}
-                    />
+                    <HomePage onLogout={handleLogout} />
                   </Suspense>
                 </RelayEnvironmentProvider>
               ) : (
-                <HomePage user={null} onLogout={handleLogout} />
+                <HomePage onLogout={handleLogout} />
               )
             }
           />
@@ -68,4 +68,3 @@ function App() {
 }
 
 export default App;
-

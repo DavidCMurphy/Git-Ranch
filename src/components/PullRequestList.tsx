@@ -1,63 +1,83 @@
-import { graphql, useLazyLoadQuery } from "react-relay";
-import type { PullRequestListQuery as PullRequestListQueryType } from "@/__generated__/PullRequestListQuery.graphql";
-
-const PullRequestListQuery = graphql`
-  query PullRequestListQuery($first: Int!) {
-    viewer {
-      login
-      pullRequests(first: $first, states: [OPEN], orderBy: { field: UPDATED_AT, direction: DESC }) {
-        totalCount
-        nodes {
-          id
-          number
-          title
-          url
-          state
-          isDraft
-          createdAt
-          updatedAt
-          repository {
-            name
-            nameWithOwner
-          }
-          baseRefName
-          headRefName
-          additions
-          deletions
-          reviewDecision
-        }
-      }
-    }
-  }
-`;
+import { graphql, usePaginationFragment } from "react-relay";
+import type { PullRequestList_viewer$key } from "./__generated__/PullRequestList_viewer.graphql";
 
 interface PullRequestListProps {
-  count?: number;
+  viewer: PullRequestList_viewer$key;
 }
 
-type PullRequest = NonNullable<
-  NonNullable<
-    PullRequestListQueryType["response"]["viewer"]["pullRequests"]["nodes"]
-  >[number]
->;
+export const PullRequestList = ({ viewer }: PullRequestListProps) => {
+  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
+    graphql`
+      fragment PullRequestList_viewer on User
+      @refetchable(queryName: "PullRequestListPaginationQuery")
+      @argumentDefinitions(
+        first: { type: "Int", defaultValue: 10 }
+        after: { type: "String" }
+      ) {
+        login
+        pullRequests(
+          first: $first
+          after: $after
+          orderBy: { field: UPDATED_AT, direction: DESC }
+        ) @connection(key: "PullRequestList_pullRequests") {
+          totalCount
+          edges {
+            node {
+              id
+              number
+              title
+              url
+              state
+              isDraft
+              createdAt
+              updatedAt
+              repository {
+                name
+                nameWithOwner
+              }
+              baseRefName
+              headRefName
+              additions
+              deletions
+              reviewDecision
 
-export default function PullRequestList({ count = 20 }: PullRequestListProps) {
-  const data = useLazyLoadQuery<PullRequestListQueryType>(PullRequestListQuery, {
-    first: count,
-  });
+              author {
+                ... on User {
+                  name
+                  login
+                }
+              }
+            }
+          }
+        }
+      }
+    `,
+    viewer
+  );
 
-  const { viewer } = data;
-  const pullRequests = (viewer.pullRequests.nodes?.filter(
-    (pr): pr is PullRequest => pr !== null && pr !== undefined
-  ) ?? []) as PullRequest[];
+  const pullRequests =
+    data.pullRequests.edges
+      ?.filter((edge) => edge?.node != null)
+      .map((edge) => edge!.node!) ?? [];
 
   const getReviewDecisionBadge = (decision: string | null | undefined) => {
     if (!decision) return null;
 
     const badges = {
-      APPROVED: { text: "Approved", color: "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200" },
-      CHANGES_REQUESTED: { text: "Changes Requested", color: "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200" },
-      REVIEW_REQUIRED: { text: "Review Required", color: "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200" },
+      APPROVED: {
+        text: "Approved",
+        color:
+          "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200",
+      },
+      CHANGES_REQUESTED: {
+        text: "Changes Requested",
+        color: "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200",
+      },
+      REVIEW_REQUIRED: {
+        text: "Review Required",
+        color:
+          "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200",
+      },
     };
 
     const badge = badges[decision as keyof typeof badges];
@@ -74,10 +94,11 @@ export default function PullRequestList({ count = 20 }: PullRequestListProps) {
     <div className="w-full max-w-4xl mx-auto p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">
-          {viewer.login}'s Open Pull Requests
+          {data.login}'s Pull Requests
         </h1>
         <p className="text-zinc-600 dark:text-zinc-400">
-          {viewer.pullRequests.totalCount} open pull request{viewer.pullRequests.totalCount !== 1 ? 's' : ''}
+          {data.pullRequests.totalCount} pull request
+          {data.pullRequests.totalCount !== 1 ? "s" : ""}
         </p>
       </div>
 
@@ -130,21 +151,32 @@ export default function PullRequestList({ count = 20 }: PullRequestListProps) {
 
               <div className="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-500">
                 <div className="flex items-center gap-1">
-                  <span className="text-green-600 dark:text-green-400">+{pr.additions}</span>
-                  <span className="text-red-600 dark:text-red-400">-{pr.deletions}</span>
+                  <span className="text-green-600 dark:text-green-400">
+                    +{pr.additions}
+                  </span>
+                  <span className="text-red-600 dark:text-red-400">
+                    -{pr.deletions}
+                  </span>
                 </div>
-                <div>
-                  Created {new Date(pr.createdAt).toLocaleDateString()}
-                </div>
-                <div>
-                  Updated {new Date(pr.updatedAt).toLocaleDateString()}
-                </div>
+                <div>Created {new Date(pr.createdAt).toLocaleDateString()}</div>
+                <div>Updated {new Date(pr.updatedAt).toLocaleDateString()}</div>
               </div>
             </a>
           ))}
         </div>
       )}
+
+      {hasNext && (
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => loadNext(10)}
+            disabled={isLoadingNext}
+            className="px-6 py-3 bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 rounded-lg font-medium hover:bg-zinc-700 dark:hover:bg-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isLoadingNext ? "Loading..." : "Load Next Page"}
+          </button>
+        </div>
+      )}
     </div>
   );
-}
-
+};

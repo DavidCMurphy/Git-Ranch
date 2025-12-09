@@ -1,13 +1,29 @@
-import { initiateGitHubLogin, type GitHubUser } from '../lib/auth';
-import PullRequestList from '../components/PullRequestList';
+import { useLazyLoadQuery, graphql } from "react-relay";
+
+import { initiateGitHubLogin } from "../lib/auth";
+import { PullRequestList } from "../components/PullRequestList";
+import { AuthorizedHeader } from "@/components/AuthorizedHeader";
+
+import { HomePageQuery } from "./__generated__/HomePageQuery.graphql";
 
 interface HomePageProps {
-  user: GitHubUser | null;
   onLogout: () => void;
 }
 
-export default function HomePage({ user, onLogout }: HomePageProps) {
-  if (!user) {
+export default function HomePage({ onLogout }: HomePageProps) {
+  const data = useLazyLoadQuery<HomePageQuery>(
+    graphql`
+      query HomePageQuery {
+        viewer {
+          ...AuthorizedHeader_user
+          ...PullRequestList_viewer
+        }
+      }
+    `,
+    {}
+  );
+
+  if (!data.viewer) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
         <div className="text-center">
@@ -31,26 +47,10 @@ export default function HomePage({ user, onLogout }: HomePageProps) {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black py-8">
       <div className="max-w-4xl mx-auto px-6 mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-              Welcome, {user.name || user.login}
-            </h1>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              {user.email}
-            </p>
-          </div>
-          <button
-            onClick={onLogout}
-            className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
-          >
-            Sign out
-          </button>
-        </div>
+        <AuthorizedHeader user={data.viewer} onLogout={onLogout} />
       </div>
 
-      <PullRequestList />
+      <PullRequestList viewer={data.viewer} />
     </div>
   );
 }
-

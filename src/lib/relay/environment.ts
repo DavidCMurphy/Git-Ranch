@@ -44,4 +44,3 @@ export function getRelayEnvironment(accessToken: string): Environment {
 export function resetRelayEnvironment(): void {
   clientEnvironment = null;
 }
-
