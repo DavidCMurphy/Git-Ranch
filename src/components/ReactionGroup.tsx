@@ -57,7 +57,7 @@ const ReactionGroup = ({ group }: Props) => {
         const reactors = group?.getLinkedRecord("reactors");
         const totalCount = Number(reactors?.getValue("totalCount")) ?? 0;
         reactors?.setValue(totalCount - 1, "totalCount");
-        group?.setValue(true, "viewerHasReacted");
+        group?.setValue(false, "viewerHasReacted");
       },
     });
   };
