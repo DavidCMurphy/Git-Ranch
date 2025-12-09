@@ -1,15 +1,30 @@
 import { graphql, useFragment } from "react-relay";
-import { PullRequestReactions_reactions$key } from "./__generated__/PullRequestReactions_reactions.graphql";
+import {
+  PullRequestReactions_reactions$key,
+  ReactionContent,
+} from "./__generated__/PullRequestReactions_reactions.graphql";
 
-const REACTION_EMOJI: Record<string, string> = {
-  CONFUSED: "😕",
-  EYES: "👀",
-  HEART: "❤️",
-  HOORAY: "🎉",
-  LAUGH: "😄",
-  ROCKET: "🚀",
-  THUMBS_DOWN: "👎",
-  THUMBS_UP: "👍",
+const getReactionEmoji = (content: ReactionContent): string => {
+  switch (content) {
+    case "CONFUSED":
+      return "😕";
+    case "EYES":
+      return "👀";
+    case "HEART":
+      return "❤️";
+    case "HOORAY":
+      return "🎉";
+    case "LAUGH":
+      return "😄";
+    case "ROCKET":
+      return "🚀";
+    case "THUMBS_DOWN":
+      return "👎";
+    case "THUMBS_UP":
+      return "👍";
+    default:
+      throw new Error(`Unknown reaction content: ${content}`);
+  }
 };
 
 type Props = {
@@ -50,7 +65,7 @@ const PullRequestReactions = ({ reactions }: Props) => {
           key={group.content}
           className="inline-flex items-center gap-1 px-2 py-0.5 text-xs border border-zinc-200 dark:border-zinc-700 rounded-full bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
         >
-          <span>{REACTION_EMOJI[group.content]}</span>
+          <span>{getReactionEmoji(group.content)}</span>
           <span>{group.reactors.totalCount}</span>
         </span>
       ))}
