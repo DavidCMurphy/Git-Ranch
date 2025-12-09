@@ -13,6 +13,7 @@ const ReactionGroup = ({ group }: Props) => {
   const data = useFragment(
     graphql`
       fragment ReactionGroup_group on ReactionGroup {
+        ...ReactionGroup_updatable
         content
         viewerHasReacted
         reactors {
@@ -47,6 +48,21 @@ const ReactionGroup = ({ group }: Props) => {
           content: content,
         },
       },
+      optimisticUpdater: (store) => {
+        if (!data) return;
+        const { updatableData } = store.readUpdatableFragment(
+          graphql`
+            fragment ReactionGroup_updatable on ReactionGroup @updatable {
+              viewerHasReacted
+              reactors {
+                totalCount
+              }
+            }
+          `,
+          data
+        );
+        updatableData.viewerHasReacted = false;
+        updatableData.reactors.totalCount--;
     });
   };
 
