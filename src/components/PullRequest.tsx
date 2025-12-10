@@ -4,7 +4,7 @@ import { PullRequest_pr$key } from "./__generated__/PullRequest_pr.graphql";
 const PullRequest = ({ pr }: { pr: PullRequest_pr$key }) => {
   const data = useFragment(
     graphql`
-      fragment PullRequest_pr on PullRequest {
+      fragment PullRequest_pr on PullRequest @throwOnFieldError {
         id
         number
         title

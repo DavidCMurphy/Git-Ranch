@@ -1,6 +1,7 @@
 import { graphql, useLazyLoadQuery } from "react-relay";
 import { type PullRequestListQuery } from "./__generated__/PullRequestListQuery.graphql";
 import PullRequest from "./PullRequest";
+import { PullRequestErrorBoundary } from "./PullRequestErrorBoundary";
 
 const PullRequestListQuery = graphql`
   query PullRequestListQuery($first: Int!) {
@@ -58,8 +59,10 @@ export default function PullRequestList({ count = 20 }: PullRequestListProps) {
         </div>
       ) : (
         <div className="grid gap-4">
-          {pullRequests.map((pr) => (
-            <PullRequest pr={pr} />
+          {pullRequests.map((pr, index) => (
+            <PullRequestErrorBoundary key={index}>
+              <PullRequest pr={pr} />
+            </PullRequestErrorBoundary>
           ))}
         </div>
       )}
