@@ -19,22 +19,25 @@ function injectFieldErrors(response: any): any {
 
   // Check if this is a pull request query response
   const pullRequests = response?.data?.viewer?.pullRequests?.nodes;
-  if (!Array.isArray(pullRequests)) return response;
+  if (!Array.isArray(pullRequests) || pullRequests.length === 0)
+    return response;
 
   const errors: any[] = response.errors || [];
 
-  pullRequests.forEach((pr: any, index: number) => {
-    // Inject a field error for every 3rd PR's title field
+  // Only affect the first PR in the list
+  const firstPr = pullRequests[0];
+  if (firstPr) {
+    // Inject a field error for the first PR's title field
     errors.push({
-      message: `Demo error: Failed to fetch title for PR #${pr.number}`,
-      path: ["viewer", "pullRequests", "nodes", index, "title"],
+      message: `Demo error: Failed to fetch title for PR #${firstPr.number}`,
+      path: ["viewer", "pullRequests", "nodes", 0, "title"],
       extensions: {
         code: "DEMO_ERROR",
       },
     });
     // Set the field to null to simulate a field-level error
-    pr.title = null;
-  });
+    firstPr.title = null;
+  }
 
   if (errors.length > 0) {
     response.errors = errors;
