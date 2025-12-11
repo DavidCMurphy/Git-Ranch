@@ -7,6 +7,7 @@ import {
 } from "./lib/relay/environment";
 import { loadAuthState, clearAuthState, type AuthState } from "./lib/auth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { TumbleweedSpawner } from "./components/TumbleweedSpawner";
 import { HomePage } from "./pages/HomePage";
 import { CallbackPage } from "./pages/CallbackPage";
 
@@ -35,6 +36,7 @@ const GitRanch = () => {
 
   return (
     <ErrorBoundary>
+      <TumbleweedSpawner />
       <BrowserRouter>
         <Routes>
           <Route
