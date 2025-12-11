@@ -1,6 +1,6 @@
 import { graphql, useLazyLoadQuery } from "react-relay";
 import type { PullRequestListQuery as PullRequestListQueryType } from "./__generated__/PullRequestListQuery.graphql";
-import ReactableReactions from "./ReactableReactions";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 type Roundup = NonNullable<
   NonNullable<
@@ -148,7 +148,7 @@ export const PullRequestList = ({ headCount = 20 }: { headCount?: number }) => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-sm text-zinc-500 dark:text-zinc-500">
+              <div className="flex items-center justify-between text-sm text-zinc-500 dark:text-zinc-500 gap-4">
                 <div className="flex items-center gap-1">
                   <span className="text-green-600 dark:text-green-400">
                     +{cattle.additions}
@@ -164,34 +164,36 @@ export const PullRequestList = ({ headCount = 20 }: { headCount?: number }) => {
                   🔄 Last wrangled{" "}
                   {new Date(cattle.updatedAt).toLocaleDateString()}
                 </div>
-                {cattle.assignees.nodes &&
-                  cattle.assignees.nodes.length > 0 && (
-                    <div className="ml-auto flex flex-col items-end gap-1">
-                      <span className="text-xs text-zinc-500">
-                        🤠 Wranglers
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {cattle.assignees.nodes.map(
-                          (assignee) =>
-                            assignee && (
-                              <div
-                                key={assignee.login}
-                                className="flex items-center gap-1"
-                              >
-                                <img
-                                  src={assignee.avatarUrl}
-                                  alt={assignee.login}
-                                  className="w-6 h-6 rounded-full border-2 border-white dark:border-zinc-900"
-                                />
-                                <span className="text-xs text-zinc-600 dark:text-zinc-400">
-                                  {assignee.login}
-                                </span>
-                              </div>
-                            )
-                        )}
+                <ErrorBoundary fallback={null}>
+                  {cattle.assignees.nodes &&
+                    cattle.assignees.nodes.length > 0 && (
+                      <div className="ml-auto flex flex-col items-end gap-1">
+                        <span className="text-xs text-zinc-500">
+                          🤠 Wranglers
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {cattle.assignees.nodes.map(
+                            (assignee) =>
+                              assignee && (
+                                <div
+                                  key={assignee.login}
+                                  className="flex items-center gap-1"
+                                >
+                                  <img
+                                    src={assignee.avatarUrl}
+                                    alt={assignee.login}
+                                    className="w-6 h-6 rounded-full border-2 border-white dark:border-zinc-900"
+                                  />
+                                  <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                                    {assignee.login}
+                                  </span>
+                                </div>
+                              )
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                </ErrorBoundary>
               </div>
             </a>
           ))}
