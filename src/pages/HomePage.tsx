@@ -1,27 +1,29 @@
-import { initiateGitHubLogin, type GitHubUser } from '../lib/auth';
-import PullRequestList from '../components/PullRequestList';
+import { initiateGitHubLogin, type GitHubUser } from "../lib/auth";
+import { PullRequestList } from "@/components/PullRequestList";
 
 interface HomePageProps {
-  user: GitHubUser | null;
-  onLogout: () => void;
+  cowboy: GitHubUser | null;
+  onHitTheTrail: () => void;
 }
 
-export default function HomePage({ user, onLogout }: HomePageProps) {
-  if (!user) {
+// 🤠 HomePage - The main saloon where cowboys gather
+export const HomePage = ({ cowboy, onHitTheTrail }: HomePageProps) => {
+  if (!cowboy) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-4 text-zinc-900 dark:text-zinc-100">
-            GitHub Pull Request Viewer
+            🤠 Welcome to the Git Ranch
           </h1>
           <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-8">
-            Sign in with GitHub to view your open pull requests
+            Howdy partner! Saddle up with GitHub to wrangle yer open pull
+            requests
           </p>
           <button
             onClick={initiateGitHubLogin}
-            className="px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg font-medium hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors"
+            className="px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg font-medium hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors cursor-pointer"
           >
-            Sign in with GitHub
+            🐴 Saddle Up with GitHub
           </button>
         </div>
       </div>
@@ -34,17 +36,15 @@ export default function HomePage({ user, onLogout }: HomePageProps) {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-              Welcome, {user.name || user.login}
+              🤠 Howdy, {cowboy.name || cowboy.login}!
             </h1>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              {user.email}
-            </p>
+            <p className="text-zinc-600 dark:text-zinc-400">{cowboy.email}</p>
           </div>
           <button
-            onClick={onLogout}
-            className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+            onClick={onHitTheTrail}
+            className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
           >
-            Sign out
+            🌅 Hit the Trail
           </button>
         </div>
       </div>
@@ -52,5 +52,6 @@ export default function HomePage({ user, onLogout }: HomePageProps) {
       <PullRequestList />
     </div>
   );
-}
+};
 
+export default HomePage;

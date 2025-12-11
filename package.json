@@ -1,5 +1,6 @@
 {
-  "name": "graphql-demo",
+  "name": "git-ranch",
+  "description": "🤠 Yeehaw! Wrangle yer GitHub Pull Requests like a true cowpoke",
   "version": "0.1.0",
   "private": true,
   "type": "module",

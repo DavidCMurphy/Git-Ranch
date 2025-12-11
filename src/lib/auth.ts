@@ -1,4 +1,6 @@
-// GitHub OAuth configuration
+// 🤠 Git Ranch - Cowboy Authentication
+// GitHub OAuth configuration for saddlin' up with the ranch
+
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 const REDIRECT_URI =
   import.meta.env.VITE_REDIRECT_URI || "http://localhost:3000/callback";
@@ -15,25 +17,22 @@ export interface AuthState {
   user: GitHubUser | null;
 }
 
-// Generate a random state for OAuth security
-function generateState(): string {
+// Generate a random trail token for OAuth security
+function generateTrailToken(): string {
   return (
     Math.random().toString(36).substring(2, 15) +
     Math.random().toString(36).substring(2, 15)
   );
 }
 
-// Initiate GitHub OAuth flow
+// 🐴 Saddle up and ride to GitHub for authentication
 export function initiateGitHubLogin(): void {
-  const state = generateState();
-  // Use localStorage instead of sessionStorage for better reliability across redirects
-  localStorage.setItem("oauth_state", state);
+  const state = generateTrailToken();
+  // Stash the trail token in the bunkhouse for when we return
+  localStorage.setItem("trail_token", state);
 
-  console.log("Initiating OAuth login with state:", state);
-  console.log(
-    "LocalStorage after setting:",
-    localStorage.getItem("oauth_state")
-  );
+  console.log("🐴 Headin' out to GitHub with trail token:", state);
+  console.log("🏠 Bunkhouse storage:", localStorage.getItem("trail_token"));
 
   const params = new URLSearchParams({
     client_id: GITHUB_CLIENT_ID,
@@ -45,31 +44,32 @@ export function initiateGitHubLogin(): void {
   window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
 }
 
-// Handle OAuth callback
+// 🏤 Check in at the tradin' post with yer authorization papers
 export async function handleOAuthCallback(
   code: string,
   state: string
 ): Promise<string | null> {
-  const savedState = localStorage.getItem("oauth_state");
+  const savedState = localStorage.getItem("trail_token");
 
-  console.log("OAuth State Check:", {
-    receivedState: state,
-    savedState: savedState,
-    match: state === savedState,
+  console.log("🏤 Trail Post Check:", {
+    receivedPapers: state,
+    expectedPapers: savedState,
+    papersMatch: state === savedState,
   });
 
   if (state !== savedState) {
-    console.error("State mismatch - possible CSRF attack");
-    console.error("Received state:", state);
-    console.error("Saved state:", savedState);
+    console.error(
+      "🚨 Whoa there! Trail papers don't match - possible cattle rustler!"
+    );
+    console.error("Received papers:", state);
+    console.error("Expected papers:", savedState);
     return null;
   }
 
-  localStorage.removeItem("oauth_state");
+  localStorage.removeItem("trail_token");
 
   try {
-    // Note: In production, this should go through your backend
-    // For development, you'll need to set up a simple proxy server
+    // Trade the authorization code for a ranch pass at the tradin' post
     const response = await fetch("http://localhost:3001/auth/github/callback", {
       method: "POST",
       headers: {
@@ -79,18 +79,18 @@ export async function handleOAuthCallback(
     });
 
     if (!response.ok) {
-      throw new Error("Failed to exchange code for token");
+      throw new Error("🌵 Failed to get yer ranch pass from the tradin' post");
     }
 
     const data = await response.json();
     return data.access_token;
   } catch (error) {
-    console.error("Error exchanging code for token:", error);
+    console.error("🌪️ Dust storm at the tradin' post:", error);
     return null;
   }
 }
 
-// Fetch user info from GitHub
+// 🤠 Fetch cowboy info from GitHub
 export async function fetchGitHubUser(
   accessToken: string
 ): Promise<GitHubUser | null> {
@@ -103,23 +103,23 @@ export async function fetchGitHubUser(
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch user info");
+      throw new Error("🤔 Couldn't find yer cowboy records");
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Error fetching user info:", error);
+    console.error("🌵 Error fetchin' cowboy info:", error);
     return null;
   }
 }
 
-// Storage helpers
+// 🏠 Bunkhouse storage helpers
 export function saveAuthState(state: AuthState): void {
-  localStorage.setItem("auth_state", JSON.stringify(state));
+  localStorage.setItem("ranch_hand", JSON.stringify(state));
 }
 
 export function loadAuthState(): AuthState {
-  const stored = localStorage.getItem("auth_state");
+  const stored = localStorage.getItem("ranch_hand");
   if (stored) {
     try {
       return JSON.parse(stored);
@@ -131,5 +131,5 @@ export function loadAuthState(): AuthState {
 }
 
 export function clearAuthState(): void {
-  localStorage.removeItem("auth_state");
+  localStorage.removeItem("ranch_hand");
 }
