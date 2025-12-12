@@ -16,26 +16,52 @@ const DEMO_FIELD_ERRORS = true;
 function injectFieldErrors(response: any): any {
   if (!DEMO_FIELD_ERRORS) return response;
 
-  // Check if this is a pull request query response
-  const pullRequests = response?.data?.viewer?.pullRequests?.nodes;
+  // Check if this is a pull request query response (handles both nodes and edges patterns)
+  const pullRequestsContainer = response?.data?.viewer?.pullRequests;
+  const pullRequests =
+    pullRequestsContainer?.edges ?? pullRequestsContainer?.nodes;
   if (!Array.isArray(pullRequests) || pullRequests.length === 0)
     return response;
 
   const errors: any[] = response.errors || [];
+  const usesEdges = !!pullRequestsContainer?.edges;
 
   // Only affect the first PR in the list
-  const firstPr = pullRequests[0];
-  if (firstPr) {
-    // Inject a field error for the first PR's title field
-    errors.push({
-      message: `Demo error: Failed to fetch title for PR #${firstPr.number}`,
-      path: ["viewer", "pullRequests", "nodes", 0, "assignees"],
-      extensions: {
-        code: "DEMO_ERROR",
-      },
-    });
-    // Set the field to null to simulate a field-level error
-    firstPr.title = null;
+  const firstPr = usesEdges ? pullRequests[0]?.node : pullRequests[0];
+  if (firstPr && firstPr.assignees) {
+    // The Wranglers fragment uses @connection with edges pattern
+    const assigneesEdges = firstPr.assignees.edges;
+    if (Array.isArray(assigneesEdges) && assigneesEdges.length > 0) {
+      const firstAssignee = assigneesEdges[0]?.node;
+      if (firstAssignee) {
+        // Build the correct path for the error
+        const basePath = usesEdges
+          ? ["viewer", "pullRequests", "edges", 0, "node"]
+          : ["viewer", "pullRequests", "nodes", 0];
+
+        // Target the name field of the first assignee to trigger @throwOnFieldError
+        const errorPath = [
+          ...basePath,
+          "assignees",
+          "edges",
+          0,
+          "node",
+          "name",
+        ];
+
+        errors.push({
+          message: `Demo error: Failed to fetch assignee name for PR #${firstPr.number}`,
+          path: errorPath,
+          extensions: {
+            code: "DEMO_ERROR",
+          },
+        });
+
+        // Set the name field to null to simulate a field-level error
+        // This combined with the error path will trigger @throwOnFieldError
+        firstAssignee.name = null;
+      }
+    }
   }
 
   if (errors.length > 0) {

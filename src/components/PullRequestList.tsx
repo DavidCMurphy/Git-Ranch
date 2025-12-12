@@ -1,103 +1,71 @@
-import { graphql, useLazyLoadQuery } from "react-relay";
+import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import type { PullRequestListQuery as PullRequestListQueryType } from "./__generated__/PullRequestListQuery.graphql";
-import { ErrorBoundary } from "./ErrorBoundary";
-
-type Roundup = NonNullable<
-  NonNullable<
-    PullRequestListQueryType["response"]["viewer"]["pullRequests"]["nodes"]
-  >[number]
->;
+import type { PullRequestList_viewer$key } from "./__generated__/PullRequestList_viewer.graphql";
+import { PullRequestCard } from "./PullRequestCard";
+import { PullRequestErrorBoundary } from "./PullRequestErrorBoundary";
 
 // 🐄 PullRequestList - Round up them cattle (PRs) from the range
-export const PullRequestList = ({ headCount = 20 }: { headCount?: number }) => {
-  const data = useLazyLoadQuery<PullRequestListQueryType>(
+export const PullRequestList = ({ headCount = 10 }: { headCount?: number }) => {
+  const queryData = useLazyLoadQuery<PullRequestListQueryType>(
     graphql`
       query PullRequestListQuery($first: Int!) {
         viewer {
-          login
-          pullRequests(
-            first: $first
-            states: [OPEN]
-            orderBy: { field: UPDATED_AT, direction: DESC }
-          ) {
-            totalCount
-            nodes {
-              id
-              number
-              title
-              url
-              state
-              isDraft
-              createdAt
-              updatedAt
-              repository {
-                name
-                nameWithOwner
-              }
-              baseRefName
-              headRefName
-              additions
-              deletions
-              reviewDecision
-              assignees(first: 5) {
-                nodes {
-                  login
-                  avatarUrl(size: 32)
-                }
-              }
-              ...ReactableReactions_reactable
-            }
-          }
+          ...PullRequestList_viewer @arguments(first: $first)
         }
       }
     `,
     { first: headCount }
   );
 
-  const { viewer } = data;
-  const roundups = (viewer.pullRequests.nodes?.filter(
-    (pr): pr is Roundup => pr !== null && pr !== undefined
-  ) ?? []) as Roundup[];
+  return <PullRequestListContent viewer={queryData.viewer} />;
+};
 
-  const getBrandingBadge = (decision: string | null | undefined) => {
-    if (!decision) return null;
+type PullRequestListContentProps = {
+  viewer: PullRequestList_viewer$key;
+};
 
-    const brands = {
-      APPROVED: {
-        text: "🏷️ Branded & Ready",
-        color:
-          "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200",
-      },
-      CHANGES_REQUESTED: {
-        text: "🔧 Needs Re-shoein'",
-        color: "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200",
-      },
-      REVIEW_REQUIRED: {
-        text: "👀 Needs Inspectin'",
-        color:
-          "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200",
-      },
-    };
+const PullRequestListContent = ({ viewer }: PullRequestListContentProps) => {
+  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
+    graphql`
+      fragment PullRequestList_viewer on User
+      @refetchable(queryName: "PullRequestListPaginationQuery")
+      @argumentDefinitions(
+        first: { type: "Int", defaultValue: 10 }
+        after: { type: "String" }
+      ) {
+        login
+        pullRequests(
+          first: $first
+          after: $after
+          orderBy: { field: UPDATED_AT, direction: DESC }
+        ) @connection(key: "PullRequestList_pullRequests") {
+          totalCount
+          edges {
+            node {
+              id
+              ...PullRequestCard_pullRequest
+            }
+          }
+        }
+      }
+    `,
+    viewer
+  );
 
-    const brand = brands[decision as keyof typeof brands];
-    if (!brand) return null;
-
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded ${brand.color}`}>
-        {brand.text}
-      </span>
-    );
-  };
+  const roundups =
+    data.pullRequests.edges?.filter(
+      (edge): edge is NonNullable<typeof edge> =>
+        edge !== null && edge?.node !== null
+    ) ?? [];
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">
-          🐄 {viewer.login}'s Cattle Roundup
+          🐄 {data.login}'s Cattle Roundup
         </h1>
         <p className="text-zinc-600 dark:text-zinc-400">
-          {viewer.pullRequests.totalCount} head of cattle need wranglin'
-          {viewer.pullRequests.totalCount !== 1 ? "" : ""}
+          {data.pullRequests.totalCount} head of cattle need wranglin'
         </p>
       </div>
 
@@ -107,96 +75,28 @@ export const PullRequestList = ({ headCount = 20 }: { headCount?: number }) => {
         </div>
       ) : (
         <div className="grid gap-4">
-          {roundups.map((cattle) => (
-            <a
-              key={cattle.id}
-              href={cattle.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-zinc-500 dark:text-zinc-400 font-mono text-sm">
-                      🐮 #{cattle.number}
-                    </span>
-                    <span className="text-zinc-400 dark:text-zinc-600">•</span>
-                    <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                      {cattle.repository.nameWithOwner}
-                    </span>
-                  </div>
-                  <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-                    {cattle.title}
-                  </h2>
-                </div>
-                <div className="flex gap-2">
-                  {cattle.isDraft && (
-                    <span className="px-2 py-1 text-xs font-medium bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded">
-                      📝 Still Ropin'
-                    </span>
-                  )}
-                  {getBrandingBadge(cattle.reviewDecision)}
-                </div>
-              </div>
+          {roundups.map(
+            (edge) =>
+              edge.node && (
+                <PullRequestErrorBoundary key={edge.node.id}>
+                  <PullRequestCard pullRequest={edge.node} />
+                </PullRequestErrorBoundary>
+              )
+          )}
+        </div>
+      )}
 
-              <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
-                <div className="flex items-center gap-1">
-                  <span className="font-mono">{cattle.headRefName}</span>
-                  <span>→</span>
-                  <span className="font-mono">{cattle.baseRefName}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-sm text-zinc-500 dark:text-zinc-500 gap-4">
-                <div className="flex items-center gap-1">
-                  <span className="text-green-600 dark:text-green-400">
-                    +{cattle.additions}
-                  </span>
-                  <span className="text-red-600 dark:text-red-400">
-                    -{cattle.deletions}
-                  </span>
-                </div>
-                <div>
-                  🌅 Started {new Date(cattle.createdAt).toLocaleDateString()}
-                </div>
-                <div>
-                  🔄 Last wrangled{" "}
-                  {new Date(cattle.updatedAt).toLocaleDateString()}
-                </div>
-                <ErrorBoundary fallback={null}>
-                  {cattle.assignees.nodes &&
-                    cattle.assignees.nodes.length > 0 && (
-                      <div className="ml-auto flex flex-col items-end gap-1">
-                        <span className="text-xs text-zinc-500">
-                          🤠 Wranglers
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {cattle.assignees.nodes.map(
-                            (assignee) =>
-                              assignee && (
-                                <div
-                                  key={assignee.login}
-                                  className="flex items-center gap-1"
-                                >
-                                  <img
-                                    src={assignee.avatarUrl}
-                                    alt={assignee.login}
-                                    className="w-6 h-6 rounded-full border-2 border-white dark:border-zinc-900"
-                                  />
-                                  <span className="text-xs text-zinc-600 dark:text-zinc-400">
-                                    {assignee.login}
-                                  </span>
-                                </div>
-                              )
-                          )}
-                        </div>
-                      </div>
-                    )}
-                </ErrorBoundary>
-              </div>
-            </a>
-          ))}
+      {hasNext && (
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => loadNext(10)}
+            disabled={isLoadingNext}
+            className="px-6 py-3 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-800 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+          >
+            {isLoadingNext
+              ? "🐄 Roundin' up more cattle..."
+              : "🤠 Load More Cattle"}
+          </button>
         </div>
       )}
     </div>

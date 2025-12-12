@@ -1,5 +1,8 @@
 import { initiateGitHubLogin, type GitHubUser } from "../lib/auth";
 import { PullRequestList } from "@/components/PullRequestList";
+import { useLazyLoadQuery, graphql } from "react-relay";
+
+import { HomePageQuery } from "./__generated__/HomePageQuery.graphql";
 
 interface HomePageProps {
   cowboy: GitHubUser | null;
@@ -8,7 +11,19 @@ interface HomePageProps {
 
 // 🤠 HomePage - The main saloon where cowboys gather
 export const HomePage = ({ cowboy, onHitTheTrail }: HomePageProps) => {
-  if (!cowboy) {
+  const data = useLazyLoadQuery<HomePageQuery>(
+    graphql`
+      query HomePageQuery {
+        viewer {
+          id
+          name
+        }
+      }
+    `,
+    {}
+  );
+
+  if (!data.viewer) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
         <div className="text-center">
@@ -36,7 +51,7 @@ export const HomePage = ({ cowboy, onHitTheTrail }: HomePageProps) => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-              🤠 Howdy, {cowboy.name || cowboy.login}!
+              🤠 Howdy, {data.viewer.name || data.viewer.login}!
             </h1>
             <p className="text-zinc-600 dark:text-zinc-400">{cowboy.email}</p>
           </div>
